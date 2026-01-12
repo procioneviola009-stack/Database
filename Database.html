@@ -1,0 +1,270 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+<meta charset="UTF-8">
+<title>Database Clienti</title>
+
+<style>
+  .table-wrapper {
+    overflow-x: auto;
+    border: 2px solid #e1051b;
+    border-radius: 8px;
+    margin-bottom: 20px;
+  }
+
+  table {
+    border-collapse: collapse;
+    width: max-content;
+    table-layout: fixed;
+  }
+
+  th, td {
+    border: 1px solid #ea0909;
+    padding: 12px;
+    text-align: center;
+    font-size: 16px;
+    min-width: 220px; /* ✅ colonne larghe */
+  }
+
+  input, select {
+    width: 100%;
+    height: 40px;
+    font-size: 16px;
+    padding: 6px;
+    box-sizing: border-box;
+  }
+
+  .choice-container {
+    display: flex;
+    gap: 10px;
+    justify-content: center;
+  }
+
+  .choice-container input {
+    display: none;
+  }
+
+  .choice-label {
+    border: 1px solid #333;
+    padding: 6px 12px;
+    cursor: pointer;
+    min-width: 60px;
+    text-align: center;
+    font-size: 14px;
+    user-select: none;
+  }
+
+  .choice-container input:checked + .choice-label {
+    background-color: #333;
+    color: #f70000;
+    font-weight: bold;
+  }
+</style>
+</head>
+
+<body>
+
+<h2>Database Clienti</h2>
+<button onclick="addRow()">➕ Aggiungi riga</button>
+
+<div class="table-wrapper">
+<table id="clientTable">
+  <thead>
+    <tr id="headerRow">
+      <th>Nome</th>
+      <th>Cognome</th>
+      <th>Telefono</th>
+      <th>Mail</th>
+      <th>Tipologia Cliente</th>
+      <th>Tipo Evento</th>
+      <th id="cerimoniaHeader" style="display:none;">Tipo Cerimonia</th>
+      <th>Servizio Scelto</th>
+      <th id="cateringHeader" style="display:none;">Opzioni Catering</th>
+      <th>Data</th>
+      <th>N° Partecipanti</th>
+      <th>Sala Scelta</th>
+      <th>Da richiamare?</th>
+      <th>Prenotato?</th>
+      <th>Nome festeggiato</th>
+      <th>Data compleanno cliente</th>
+    </tr>
+  </thead>
+
+  <tbody></tbody>
+</table>
+</div>
+
+<script>
+
+/* ✅ AGGIUNGI RIGA */
+function addRow(values = []) {
+  const tbody = document.querySelector("#clientTable tbody");
+  const row = document.createElement("tr");
+  const id = Date.now();
+
+  row.innerHTML = `
+    <td><input type="text"></td>
+    <td><input type="text"></td>
+    <td><input type="text"></td>
+    <td><input type="email"></td>
+
+    <td>
+      <select>
+        <option value="">--</option>
+        <option>Cliente</option>
+        <option>Info</option>
+      </select>
+    </td>
+
+    <td>
+      <select onchange="toggleCerimonia(this)">
+        <option value="">--</option>
+        <option>corso per pubblico</option>
+        <option>festa bambini</option>
+        <option>18 esimi</option>
+        <option>festa adulti</option>
+        <option>azienda</option>
+        <option value="cerimonia">cerimonia</option>
+      </select>
+    </td>
+
+    <td class="cerimoniaCell" style="display:none;">
+      <select>
+        <option value="">--</option>
+        <option>battesimo</option>
+        <option>comunione</option>
+        <option>cresima</option>
+      </select>
+    </td>
+
+    <td>
+      <select onchange="toggleCatering(this)">
+        <option value="">--</option>
+        <option>autogestito</option>
+        <option value="catering">catering</option>
+      </select>
+    </td>
+
+    <td class="cateringCell" style="display:none;">
+      <select>
+        <option value="">--</option>
+        <option>prezzo</option>
+        <option>Servizi plus</option>
+      </select>
+    </td>
+
+    <td><input type="date"></td>
+    <td><input type="number" min="1"></td>
+
+    <td>
+      <select>
+        <option value="">--</option>
+        <option>fienile</option>
+        <option>camino</option>
+        <option>portico</option>
+        <option>corte</option>
+        <option>patio</option>
+        <option>bracere</option>
+      </select>
+    </td>
+
+    <td>
+      <div class="choice-container">
+        <input type="radio" id="rich_si_${id}" name="rich_${id}" value="si">
+        <label class="choice-label" for="rich_si_${id}">SI</label>
+        <input type="radio" id="rich_no_${id}" name="rich_${id}" value="no">
+        <label class="choice-label" for="rich_no_${id}">NO</label>
+      </div>
+    </td>
+
+    <td>
+      <div class="choice-container">
+        <input type="radio" id="pren_si_${id}" name="pren_${id}" value="si">
+        <label class="choice-label" for="pren_si_${id}">SI</label>
+        <input type="radio" id="pren_no_${id}" name="pren_${id}" value="no">
+        <label class="choice-label" for="pren_no_${id}">NO</label>
+      </div>
+    </td>
+
+    <td><input type="text"></td>
+    <td><input type="date"></td>
+  `;
+
+  tbody.appendChild(row);
+
+  /* ✅ Se stiamo caricando dati salvati, riempi i campi */
+  if (values.length > 0) {
+    const inputs = row.querySelectorAll("input, select");
+    inputs.forEach((input, i) => {
+      input.value = values[i] || "";
+    });
+
+    toggleCerimonia(row.querySelectorAll("select")[1]);
+    toggleCatering(row.querySelectorAll("select")[2]);
+  }
+}
+
+/* ✅ MOSTRA / NASCONDE "TIPO CERIMONIA" */
+function toggleCerimonia(select) {
+  const row = select.closest("tr");
+  const cell = row.querySelector(".cerimoniaCell");
+  const header = document.getElementById("cerimoniaHeader");
+
+  if (select.value === "cerimonia") {
+    cell.style.display = "";
+    header.style.display = "";
+  } else {
+    cell.style.display = "none";
+    header.style.display = "none";
+  }
+
+  saveTable();
+}
+
+/* ✅ MOSTRA / NASCONDE "OPZIONI CATERING" */
+function toggleCatering(select) {
+  const row = select.closest("tr");
+  const cell = row.querySelector(".cateringCell");
+  const header = document.getElementById("cateringHeader");
+
+  if (select.value === "catering") {
+    cell.style.display = "";
+    header.style.display = "";
+  } else {
+    cell.style.display = "none";
+    header.style.display = "none";
+  }
+
+  saveTable();
+}
+
+/* ✅ SALVATAGGIO AUTOMATICO */
+function saveTable() {
+  const rows = [];
+  document.querySelectorAll("#clientTable tbody tr").forEach(tr => {
+    const data = [];
+    tr.querySelectorAll("input, select").forEach(input => {
+      data.push(input.value);
+    });
+    rows.push(data);
+  });
+
+  localStorage.setItem("clientiData", JSON.stringify(rows));
+}
+
+/* ✅ CARICAMENTO AUTOMATICO */
+function loadTable() {
+  const saved = localStorage.getItem("clientiData");
+  if (!saved) return;
+
+  const rows = JSON.parse(saved);
+  rows.forEach(r => addRow(r));
+}
+
+document.addEventListener("input", saveTable);
+window.addEventListener("load", loadTable);
+
+</script>
+
+</body>
+</html>
